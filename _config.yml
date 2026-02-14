@@ -10,10 +10,10 @@ lang: zh-TW
 timezone: Asia/Taipei
 
 # jekyll-seo-tag settings
-title: AI Digest
-tagline: 每日精選 AI 新聞 — LLM、Agent、模型發布與產業趨勢
+title: 矽谷浪人
+tagline: 每天幫你追 AI 的浪 — 模型、Agent、工具、產業風向
 description: >-
-  每日精選 AI 新聞摘要，涵蓋 LLM、AI Agent、模型發布與產業趨勢。
+  每日 AI 浪報，從上百個資訊源裡挑出真正值得衝的浪。不吹不黑，有料有觀點。
 
 url: "https://eagle-cool.github.io"
 baseurl: "/ai-digest"
@@ -22,7 +22,7 @@ github:
   username: eagle-cool
 
 social:
-  name: AI Digest
+  name: 矽谷浪人
   links:
     - https://github.com/eagle-cool
 
