@@ -4,7 +4,7 @@ description: Generates daily AI news digests from Miniflux RSS feeds (AI categor
 argument-hint: "[optional: date]"
 disable-model-invocation: false
 user-invocable: true
-allowed-tools: Task, WebFetch, Read, Write, Bash(mkdir*), Bash(date*), Bash(ls*), Bash(node *), Bash(test *), Bash(docker *), Bash(git *), Bash(cp *), Bash(rm *)
+allowed-tools: Task, WebFetch, Read, Write, Bash(date*), Bash(ls*), Bash(node *), Bash(test *), Bash(docker *), Bash(git *), Bash(rm *)
 ---
 
 # AI Digest — RSS-First AI News → GitHub Pages
@@ -76,8 +76,7 @@ Steps:
      - If NOT running: inform user to start Miniflux first, then verify with healthcheck:
        node ~/.claude/skills/miniflux/client.mjs healthcheck
   1. Determine target date (user argument or today via `date +%Y-%m-%d`)
-  2. Create output directory: mkdir -p NewsReport/
-  3. Calculate "after" timestamp (3 days before target date):
+  2. Calculate "after" timestamp (3 days before target date):
      # Use: date -v-3d +%s (macOS) or date -d '3 days ago' +%s (Linux)
   4. Fetch unread entries from Miniflux WITH category and time filter:
      node ~/.claude/skills/miniflux/client.mjs entries --status unread --limit 200 --category 3 --after <unix_timestamp> --direction desc
@@ -198,8 +197,7 @@ Tags (only use relevant ones from this set):
   - llm, agents, ai-tools, ai-research, ai-industry, ai-safety, mlops, ai-coding
 
 Output:
-  - Directory: NewsReport/
-  - Filename: YYYY-MM-DD-<slug>.md
+  - Write directly to: _posts/YYYY-MM-DD-<slug>.md
   - Format: Standard Markdown with Jekyll front matter
   - Language: Traditional Chinese (titles keep original English)
 
@@ -239,11 +237,9 @@ This skill runs inside the ai-digest Jekyll repo. Posts are written directly to 
 GitHub Pages URL base: https://eagle-cool.github.io/ai-digest
 
 Steps:
-  1. Copy report to Jekyll _posts directory:
-     cp "NewsReport/YYYY-MM-DD-<slug>.md" "_posts/YYYY-MM-DD-<slug>.md"
-  2. Pull, commit, and push:
+  1. Pull, commit, and push (report already written to _posts/ in Phase 4):
      git add -A && git commit -m "YYYY-MM-DD: <slug>" && git pull --rebase && git push
-  4. Construct page URL:
+  2. Construct page URL:
      https://eagle-cool.github.io/ai-digest/posts/<slug>/
   5. Wait 30 seconds for GitHub Pages to build, then verify once with WebFetch:
      - If live: proceed to Phase 7
@@ -347,6 +343,6 @@ tags: [llm, agents]
 | 0 unread entries | Report "no new AI content", skip report generation |
 | fetch-content empty | Fallback to WebFetch for that article |
 | WebFetch fails | Use content_preview only, note in report |
-| git push fails | Report error, report still saved locally in NewsReport/ |
+| git push fails | Report error, report still saved locally in _posts/ |
 | GitHub Pages not live after 2 min | Send Discord with URL anyway (will be live shortly) |
 | Discord send fails | Log error, do not affect report |
