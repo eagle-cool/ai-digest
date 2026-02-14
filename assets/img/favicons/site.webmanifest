@@ -1,0 +1,14 @@
+{
+  "name": "AI Digest",
+  "short_name": "AI Digest",
+  "icons": [
+    {
+      "src": "/ai-digest/assets/img/favicons/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "theme_color": "#f59e0b",
+  "background_color": "#1b1b1e",
+  "display": "standalone"
+}
