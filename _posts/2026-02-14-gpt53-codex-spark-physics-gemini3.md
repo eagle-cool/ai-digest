@@ -5,8 +5,6 @@ description: "OpenAI 發布 GPT-5.3-Codex-Spark 即時編程模型，速度提�
 tags: [llm, ai-coding, ai-research]
 ---
 
-# GPT-5.3 即時編程模型登場、GPT-5.2 推導全新物理公式、Gemini 3 Deep Think 升級
-
 今天 AI 圈的主旋律是「AI 不再只是工具，而是研究夥伴」。OpenAI 一口氣丟出三顆重磅：GPT-5.3-Codex-Spark 把 coding 速度推到即時等級、GPT-5.2 在理論物理領域直接推導出新公式——不是搜尋、不是重組，是真正的新發現。Google 也不甘示弱，Gemini 3 Deep Think 推理模式迎來重大升級，瞄準科學與工程領域的深度推理任務。
 
 ---
