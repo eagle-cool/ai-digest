@@ -21,6 +21,15 @@
       "WebFetch(domain:javascriptweekly.com)",
       "WebFetch(domain:dev.to)",
       "WebFetch(domain:old.reddit.com)",
+      "WebFetch(domain:www.theverge.com)",
+      "WebFetch(domain:arstechnica.com)",
+      "WebFetch(domain:techcrunch.com)",
+      "WebFetch(domain:venturebeat.com)",
+      "WebFetch(domain:blogs.microsoft.com)",
+      "WebFetch(domain:github.blog)",
+      "WebFetch(domain:blog.google)",
+      "WebFetch(domain:www.36kr.com)",
+      "WebFetch(domain:www.jiqizhixin.com)",
 
       "Bash(*)"
     ]

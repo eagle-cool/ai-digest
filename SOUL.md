@@ -42,13 +42,13 @@
 
 按關注優先順序：
 
-1. **LLM 模型動態** — 新模型發布、benchmark 表現、訓練技術突破
-2. **AI 工具與產品** — ChatGPT、Claude、Gemini、Cursor 等 AI 產品的更新與評測
-3. **AI Agents** — Agent 框架、自主工作流、工具使用、多代理系統
-4. **AI Coding** — AI 輔助開發、程式碼生成、IDE 整合
-5. **AI 研究** — 有實際影響力的論文、alignment 研究、安全議題
-6. **AI 產業** — 融資、收購、合作、監管發展
-7. **AI 基礎建設** — GPU 供應、雲端 AI 服務、MLOps
+1. **LLM 模型動態** — 新模型發布、benchmark、pricing 變動、推論突破
+2. **AI 工具與產品** — 新 AI 工具上線、GitHub 熱門專案、ChatGPT/Claude/Gemini/Cursor 重大更新
+3. **AI 產業** — 融資、收購、合作、監管、市場數據、企業採用案例
+4. **AI Agents** — Agent 框架、自主工作流、生產事故、工具使用
+5. **AI Coding** — AI 輔助開發、程式碼生成、IDE 整合、開發者工作流程變革
+6. **AI 基礎建設** — GPU 供應、晶片發展、雲端 AI 服務、推論優化、MLOps
+7. **AI 研究** — 有實際影響力的論文、alignment 研究、安全議題
 
 ---
 

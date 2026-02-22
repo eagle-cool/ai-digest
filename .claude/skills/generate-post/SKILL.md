@@ -9,7 +9,7 @@ allowed-tools: Task, WebFetch, Read, Write, Bash(date*), Bash(ls*), Bash(node *)
 
 # AI Digest — RSS-First AI News → GitHub Pages
 
-> **Source**: Miniflux RSS aggregator (AI category, ~30 feeds)
+> **Source**: Miniflux RSS aggregator (AI category ~16 feeds + AI-Blogs ~11 feeds)
 > **Strategy**: RSS for bulk retrieval, Agent for quality evaluation, WebFetch only for deep-reading
 > **Publish**: GitHub Pages (Jekyll) + Discord notification
 > **Language**: Traditional Chinese (繁體中文) - titles keep original English, summaries in Traditional Chinese
@@ -30,7 +30,7 @@ allowed-tools: Task, WebFetch, Read, Write, Bash(date*), Bash(ls*), Bash(node *)
 │       ▼                ▼                ▼                ▼       │
 │   Miniflux API    Agent scores    WebFetch top 3    Markdown     │
 │   → AI category   title/desc     articles only     + slug       │
-│     (1 API call)   (no fetch)     (optional)                     │
+│   + AI-Blogs      (no fetch)     (optional)                     │
 │                                                                   │
 │   ┌──────────┐    ┌──────────┐    ┌──────────┐                  │
 │   │ Phase 5  │ →  │ Phase 6  │ →  │ Phase 7  │                  │
@@ -45,7 +45,7 @@ allowed-tools: Task, WebFetch, Read, Write, Bash(date*), Bash(ls*), Bash(node *)
 └──────────────────────────────────────────────────────────────────┘
          ↕ REST API (via client.mjs)
 ┌────────────────────┐
-│   Miniflux         │  ← AI category feeds (~30 sources)
+│   Miniflux         │  ← AI category (~16 feeds) + AI-Blogs (~11 feeds)
 │   (always running) │  ← Handles caching, dedup, parsing
 └────────────────────┘
 ```
@@ -67,7 +67,7 @@ Steps:
 
 ### Phase 1: Fetch RSS Data
 
-Retrieve unread entries from Miniflux **AI category only** (category_id = 3).
+Retrieve unread entries from Miniflux — **two queries**: AI category (main pool) + AI-Blogs category (deep-dive candidates).
 
 ```yaml
 Steps:
@@ -78,12 +78,16 @@ Steps:
   1. Determine target date (user argument or today via `date +%Y-%m-%d`)
   2. Calculate "after" timestamp (3 days before target date):
      # Use: date -v-3d +%s (macOS) or date -d '3 days ago' +%s (Linux)
-  4. Fetch unread entries from Miniflux WITH category and time filter:
+  3. Query 1 — Main pool (AI category, category_id=3):
      node ~/.claude/skills/miniflux/client.mjs entries --status unread --limit 200 --category 3 --after <unix_timestamp> --direction desc
      → IMPORTANT: Always use --category 3 to filter AI feeds only
      → IMPORTANT: Always use --after to avoid pulling old imported articles
      → Returns JSON: { total, count, entries: [{ id, title, url, feed, published, content_preview }] }
-  5. If total == 0, check if Miniflux is healthy:
+  4. Query 2 — Blog pool (AI-Blogs category, category_id=7):
+     node ~/.claude/skills/miniflux/client.mjs entries --status unread --limit 50 --category 7 --after <unix_timestamp> --direction desc
+     → These are personal blog entries — candidates for Tier 3 (深水區) only
+     → Tag each entry with source_pool: "blogs" for Phase 2 scoring
+  5. If both queries return 0 entries, check if Miniflux is healthy:
      node ~/.claude/skills/miniflux/client.mjs healthcheck
      - If unhealthy: report error and stop
      - If healthy but 0 entries: report "no new AI content today"
@@ -94,49 +98,67 @@ Steps:
 The Agent evaluates entries based on title + content_preview (RSS description). No web fetching needed.
 
 ```yaml
-Input: Array of entries from Phase 1 (title, url, feed, content_preview)
+Input: Array of entries from Phase 1 — both Main pool and Blog pool (title, url, feed, content_preview, source_pool)
 
-Agent Evaluation Criteria:
-  Include (AI-focused topics):
-    - LLM: Model releases, benchmarks, training techniques, fine-tuning, inference optimization
-    - AI Agents: Agent frameworks, autonomous workflows, tool use, planning systems
-    - AI Coding: AI-assisted development tools, code generation, IDE integrations
-    - AI Products: ChatGPT, Claude, Gemini, Copilot, Cursor, and other AI SaaS
-    - AI Research: Papers with practical implications, alignment research, safety
-    - AI Industry: Funding, acquisitions, partnerships, regulatory developments
-    - AI Infrastructure: GPU supply, cloud AI services, training clusters, MLOps
-  Exclude:
-    - Non-AI tech content (frontend, systems, DevOps, security)
-    - Marketing puff / PR without substance
-    - Crypto/Blockchain (unless AI-related)
-    - Job postings / hiring announcements
-    - Content older than 3 days
+Step 1 — Source Type Classification (classify BEFORE scoring):
+  For each entry, assign one Source Type:
+  - Type A — 廠商/產品新聞: Model releases, updates, benchmarks, pricing, API changes, SDK releases
+  - Type B — 產業事件: Funding >$50M, acquisitions, partnerships, regulation, enterprise AI adoption, market data
+  - Type C — 工具/專案上線: New open-source AI tools, GitHub trending, Show HN, major tool updates
+  - Type D — 技術發展: Research papers with practical implications, inference breakthroughs, training techniques
+  - Type E — 觀點/分析: Opinion pieces, editorials, personal experience sharing
+  - Type F — 雜訊: Marketing fluff, job postings, crypto/blockchain (unless AI-related), non-AI content
 
-Deduplication:
-  - Handled by Miniflux read/unread status (selected articles are marked read after report)
-  - Title similarity check (>80% = duplicate)
+  → Type F entries are automatically excluded — do not score them.
+  → Entries from Blog pool (source_pool: "blogs") are typically Type D or E.
 
-Scoring (1-5):
+Step 2 — Include Priority (AI-focused topics, ordered by priority):
+  1. 模型發布 & 更新 — Any AI Lab model release, benchmark, pricing change (Type A)
+  2. AI 工具上線 & 更新 — GitHub, Cursor, Cline, Copilot, new AI tools/projects (Type A/C)
+  3. AI 基礎建設 — GPU, chips, inference optimization, cost breakthroughs (Type A/B)
+  4. AI 產業動態 — Funding >$50M, acquisitions, major partnerships, regulation (Type B)
+  5. AI Agents — Frameworks, production incidents, tool use (Type A/C/D)
+  6. AI Coding — Code generation, IDE integrations (Type A/C)
+  7. AI 研究 — Papers with practical impact (Type D)
+  8. 觀點分析 — Only if data-backed, goes to Tier 3 (Type E)
+
+Step 3 — Scoring (1-5) with Source Type Weighting:
+  Base scoring:
   - 5: Major model release, breaking AI industry news, groundbreaking research
   - 4: High-quality AI technical deep-dive, significant product update
   - 3: Interesting AI content, useful AI tutorial or analysis
   - 2: Okay content, niche AI interest
   - 1: Low quality or barely relevant to AI
 
-Output: Tiered selection for the digest:
+  Source Type adjustments (after base score, capped at 5):
+  - Type A/B: +1 bonus (vendor news and industry events get priority)
+  - Type C: +1 bonus IF has GitHub stars data or active HN discussion
+  - Type E: -1 penalty when considered for Tier 1 or Tier 2
+  - Type F: auto-exclude (score = 0)
+
+Deduplication:
+  - Handled by Miniflux read/unread status (selected articles are marked read after report)
+  - Title similarity check (>80% = duplicate)
+
+Step 4 — Tier Assignment with Hard Rules:
   Tier 1 — 🌊 今日浪頭 (3 articles, score 4-5):
     - The day's biggest AI waves, will get deep-read + rich summaries
+    - HARD RULE: At least 2 of 3 MUST be Type A, B, or C
   Tier 2 — ⚡ 衝浪快報 (8-12 articles, score 3-4):
     - Worth knowing, one-liner summaries only
+    - HARD RULE: Type E articles max 2 in Tier 2
   Tier 3 — 🏄 深水區 (3-5 articles, score 3+):
     - Long-form AI essays, research papers, or deep-dives worth diving into
+    - Type E articles belong here; also includes Type D
+    - Blog pool entries are candidates for Tier 3 only
 
   Each entry includes:
     - title (original English)
     - url
     - feed_name
+    - source_type: A | B | C | D | E
     - tier: 1 | 2 | 3
-    - quality_score: 1-5
+    - quality_score: 1-5 (after weighting)
     - summary_hint: 1-sentence description from content_preview (繁體中文)
     - entry_id: Miniflux entry ID (for marking as read later)
 ```
@@ -324,7 +346,7 @@ tags: [llm, agents]
 ## Constraints & Principles
 
 1. **RSS-First**: Always use Miniflux API for data retrieval. Never scrape source websites for listing.
-2. **AI Category Only**: Always filter by `--category 3` to get AI feeds only.
+2. **AI Category + AI-Blogs**: Main pool from `--category 3` (AI), blog candidates from `--category 7` (AI-Blogs) for Tier 3.
 3. **Agent for Evaluation Only**: Agent reads title/description to score and filter. No web fetching for listing.
 4. **Deep Read = Selective**: Only top 3 articles with score >= 4 get full content fetch. Use Miniflux `fetch-content` first, WebFetch as fallback.
 5. **Cost Control**: Target < 10K agent tokens per run.

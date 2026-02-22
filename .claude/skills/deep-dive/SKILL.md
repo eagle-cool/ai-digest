@@ -75,18 +75,31 @@ Steps:
   1. Determine lookback window:
      - Default: 7 days (deep-dive looks at a wider window than daily digest)
      - Calculate "after" timestamp: date -v-7d +%s (macOS)
-  2. Fetch unread entries:
-     node ~/.claude/skills/miniflux/client.mjs entries --status unread --limit 200 --category 3 --after <unix_timestamp> --direction desc
+  2. Fetch unread entries — two queries:
+     Query 1 — Main pool (AI category, category_id=3):
+       node ~/.claude/skills/miniflux/client.mjs entries --status unread --limit 200 --category 3 --after <unix_timestamp> --direction desc
+     Query 2 — Blog pool (AI-Blogs category, category_id=7):
+       node ~/.claude/skills/miniflux/client.mjs entries --status unread --limit 50 --category 7 --after <unix_timestamp> --direction desc
+     → Merge both pools. Blog entries are often excellent deep-dive candidates (long-form analysis).
   3. If user provided a keyword argument (e.g., /deep-dive agents):
      - Filter entries whose title or content_preview match the keyword
+  3a. Dedup check — avoid repeating recent topics:
+     - Run: ls _posts/ | grep deep-dive | tail -14
+     - Read the titles of deep-dive posts from the last 14 days
+     - If a candidate topic overlaps significantly with a recent deep-dive, deprioritize it
+     - "Overlap" = same company + same event, or same core thesis
   4. Score each entry for DEEP-DIVE WORTHINESS (not same as daily digest scoring):
 
 Deep-Dive Selection Criteria (score 1-10):
   Priority topics (score boost +3):
     - 產業大轉變: Signs of fundamental industry shifts, paradigm changes
+      Examples: "AWS AI agent took down production" (AI reliability crisis), "SaaS tsunami" (AI disrupting entire software category), "llama.cpp acquired by Meta" (open-source AI consolidation)
     - 人類被取代: AI replacing human jobs, automation of cognitive work
-    - 商業模式衝擊: Business model disruption, value chain reorganization
-    - 開發者生態: Developer workflow revolution, new development paradigms
+      MUST have concrete evidence (layoff data, productivity metrics, case studies) — not speculation or opinion pieces
+    - 商業模式衝擊: Business model disruption — focus on "how money is made differently now"
+      Examples: AI-first pricing models, per-token economics killing seat-based SaaS, open-source models commoditizing proprietary APIs
+    - 開發者生態: Developer workflow revolution, fundamental changes in how developers work
+      Examples: AI coding agents replacing junior dev tasks, new IDE paradigms, shift from writing code to reviewing AI-generated code
   High score indicators:
     - The article reveals a trend, not just a product launch
     - It has implications beyond the immediate news
@@ -97,6 +110,7 @@ Deep-Dive Selection Criteria (score 1-10):
     - Pure product announcement with no deeper implications
     - Already well-covered topic with nothing new to add
     - Too niche or technical to sustain a 6000+ word analysis
+    - Topic already covered in a recent deep-dive (see dedup check in step 3a)
 
   5. Select THE ONE article with the highest score
      - Present the top 3 candidates to yourself with reasoning
